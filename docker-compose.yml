@@ -1,0 +1,25 @@
+services:
+  cyfrocode:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: cyfrocode:latest
+    container_name: cyfrocode
+    stdin_open: true
+    tty: true
+    user: 1000:1000
+    volumes:
+      - .:/workspace:z
+      - ./data/opencode-config:/home/user/.config/opencode:z
+      - ./data/macrodata:/home/user/.config/macrodata:z
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/home/user/.Xauthority:ro
+    environment:
+      - HOME=/home/user
+      - PLGRID_API_KEY=${PLGRID_API_KEY}
+      - CONTEXT7_API_KEY=${CONTEXT7_API_KEY:-}
+      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN:-}
+      - DISPLAY=${DISPLAY:-:0}
+      - XAUTHORITY=/home/user/.Xauthority
+    working_dir: /workspace
+    network_mode: host

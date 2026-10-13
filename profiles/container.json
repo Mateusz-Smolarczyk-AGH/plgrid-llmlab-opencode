@@ -1,0 +1,12 @@
+{
+  "mcp": {
+    "gitnexus": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "gitnexus",
+        "mcp"
+      ]
+    }
+  }
+}

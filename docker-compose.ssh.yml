@@ -1,0 +1,4 @@
+services:
+  cyfrocode:
+    volumes:
+      - ${SSH_KEY_PATH}:/home/user/.ssh/ssh_key:ro

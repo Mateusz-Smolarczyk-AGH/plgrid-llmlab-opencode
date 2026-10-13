@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@opencode-ai/plugin": "^1.17.12",
+    "@macrodata/opencode": "^0.3.0"
+  }
+}

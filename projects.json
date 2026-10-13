@@ -1,0 +1,9 @@
+{
+  "projects": [
+    {
+      "host_path": "/home/mateusz/Projects/simulation",
+      "container_name": "simulation",
+      "container_path": "/projects/simulation"
+    }
+  ]
+}
