@@ -62,6 +62,14 @@ scripts/enter-project.sh my-api                        # cd + opencode
 `add-project.sh` writes `projects.json` and regenerates `docker-compose.override.yml`
 from it — the compose files themselves are never edited in place.
 
+The override is rendered from `projects.json` by `scripts/render-override.py`. Container
+rebuilds and starts via `scripts/setup.sh` include that override automatically, so mounts
+survive a rebuild. If you rebuild another way and projects are missing, remount them with:
+
+```bash
+scripts/remount-projects.sh
+```
+
 ## SSH access (optional)
 
 ```bash

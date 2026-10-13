@@ -3,6 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+OVERRIDE_FILE="$REPO_ROOT/docker-compose.override.yml"
+PROJECTS_FILE="$REPO_ROOT/projects.json"
 
 PROFILE="container"
 TARGET=""
@@ -94,6 +96,11 @@ if [ "$PROFILE" = "container" ]; then
         cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
         echo "Created .env from .env.example - fill in PLGRID_API_KEY before building."
     fi
+    if [ -f "$PROJECTS_FILE" ]; then
+        python3 "$SCRIPT_DIR/render-override.py" \
+            --projects "$PROJECTS_FILE" \
+            --out "$OVERRIDE_FILE"
+    fi
 fi
 
 if [ "$BUILD" = "1" ]; then
@@ -101,11 +108,15 @@ if [ "$BUILD" = "1" ]; then
         echo "No .env found; create one from .env.example first." >&2
         exit 1
     fi
+    COMPOSE=(docker compose -f "$REPO_ROOT/docker-compose.yml")
+    if [ -f "$OVERRIDE_FILE" ]; then
+        COMPOSE+=(-f "$OVERRIDE_FILE")
+    fi
     echo "Building image..."
-    docker compose -f "$REPO_ROOT/docker-compose.yml" build
+    "${COMPOSE[@]}" build
     if [ "$UP" = "1" ]; then
         echo "Starting container..."
-        docker compose -f "$REPO_ROOT/docker-compose.yml" up -d
+        "${COMPOSE[@]}" up -d
         sleep 5
         if [ -f "$SCRIPT_DIR/verify.sh" ]; then
             docker exec cyfrocode /workspace/scripts/verify.sh || true

@@ -9,3 +9,4 @@ node_modules/
 data/
 docker-compose.override.yml
 skills/cyfrocode-specialists/
+projects.json

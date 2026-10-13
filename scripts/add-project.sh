@@ -30,11 +30,11 @@ if [ ! -d "$HOST_PATH" ]; then
     exit 1
 fi
 
-python3 - "$PROJECTS_FILE" "$OVERRIDE_FILE" "$HOST_PATH" "$CONTAINER_NAME" "$CONTAINER_PATH" <<'PY'
+python3 - "$PROJECTS_FILE" "$HOST_PATH" "$CONTAINER_NAME" "$CONTAINER_PATH" <<'PY'
 import json
 import sys
 
-projects_file, override_file, host_path, name, container_path = sys.argv[1:6]
+projects_file, host_path, name, container_path = sys.argv[1:5]
 
 try:
     with open(projects_file) as f:
@@ -61,14 +61,12 @@ with open(projects_file, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
 
-lines = ["services:", "  cyfrocode:", "    volumes:"]
-for project in data["projects"]:
-    lines.append(f"      - {project['host_path']}:{project['container_path']}:z")
-with open(override_file, "w") as f:
-    f.write("\n".join(lines) + "\n")
-
 print(f"{'Updated' if updated else 'Added'} project '{name}' -> {container_path}")
 PY
+
+python3 "$SCRIPT_DIR/render-override.py" \
+    --projects "$PROJECTS_FILE" \
+    --out "$OVERRIDE_FILE"
 
 if docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
     echo "Restarting container to apply mounts..."
