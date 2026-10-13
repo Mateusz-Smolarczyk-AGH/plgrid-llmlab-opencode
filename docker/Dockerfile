@@ -24,6 +24,8 @@ RUN curl -fsSL https://bun.sh/install | bash
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
+RUN uv tool install "paper-search-mcp==0.1.4"
+
 RUN npm install -g \
     opencode-ai \
     gitnexus@1.6.12 \

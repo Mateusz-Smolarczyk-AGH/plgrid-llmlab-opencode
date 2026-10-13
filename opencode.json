@@ -88,6 +88,7 @@
       "macrodata-*": "allow",
       "paper-search": "allow",
       "playwright-*": "allow",
+      "llm-wiki": "allow",
       "cyfrocode-specialists": "allow"
     }
   },
@@ -134,7 +135,7 @@
       "mode": "primary",
       "model": "plgrid/deepseek-ai/DeepSeek-V4.1-Flash",
       "temperature": 0.1,
-      "prompt": "You plan and delegate; you never edit files yourself. Investigate first with read and search tools. Then state a concrete plan as numbered steps, each naming the files it touches. Delegate implementation to @fastfix for small mechanical edits and @general for substantial ones, and use @reviewer to check the result. If a step is too vague to delegate, sharpen it before handing it over. Use your tools to inspect real files rather than guessing at contents. Put only the parameter value inside a tool call - never reasoning or commentary. Do your thinking before the call, then emit a clean call.",
+      "prompt": "You plan and delegate; you never edit files yourself. Investigate first with read and search tools. If requirements are ambiguous, context is missing, or there are multiple architectural choices, STOP and ask the user for a decision before formulating the final plan. Once everything is clear, state a concrete plan as numbered steps, each naming the files it touches. Delegate implementation to @fastfix for small mechanical edits and @editor for substantial ones, and use @reviewer to check the result. If a step is too vague to delegate, sharpen it before handing it over. Use your tools to inspect real files rather than guessing at contents. Put only the parameter value inside a tool call - never reasoning or commentary. Do your thinking before the call, then emit a clean call.",
       "tools": {
         "write": false,
         "edit": false,

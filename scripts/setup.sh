@@ -89,6 +89,7 @@ python3 "$SCRIPT_DIR/render-config.py" \
 
 if [ "$PROFILE" = "container" ]; then
     mkdir -p "$REPO_ROOT/data/macrodata"
+    mkdir -p "$REPO_ROOT/data/wikis"
     if [ ! -f "$REPO_ROOT/.env" ] && [ -f "$REPO_ROOT/.env.example" ]; then
         cp "$REPO_ROOT/.env.example" "$REPO_ROOT/.env"
         echo "Created .env from .env.example - fill in PLGRID_API_KEY before building."

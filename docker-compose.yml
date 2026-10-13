@@ -12,6 +12,7 @@ services:
       - .:/workspace:z
       - ./data/opencode-config:/home/user/.config/opencode:z
       - ./data/macrodata:/home/user/.config/macrodata:z
+      - ./data/wikis:/home/user/wikis:z
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/.Xauthority:/home/user/.Xauthority:ro
     environment:

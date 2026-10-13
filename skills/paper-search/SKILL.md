@@ -9,16 +9,16 @@ Search, download, and read academic papers via the `paper-search` CLI.
 
 ## CLI Usage
 
-All commands run via:
+`paper-search` is installed on `PATH` (via `uv tool install paper-search-mcp`), so commands run directly:
 ```bash
-uv run --directory /opt/agents_tools/paper-search-mcp paper-search <command> [args]
+paper-search <command> [args]
 ```
 
-Replace `/opt/agents_tools/paper-search-mcp` with the absolute path to your clone of this repository.
+If it is not on `PATH`, fall back to `uvx --from paper-search-mcp paper-search <command> [args]`.
 
 ### Search
 ```bash
-uv run --directory /opt/agents_tools/paper-search-mcp paper-search search "<query>" -n <max_per_source> -s <sources> -y <year>
+paper-search search "<query>" -n <max_per_source> -s <sources> -y <year>
 ```
 - `-n`: results per source (default: 5)
 - `-s`: comma-separated sources or "all" (default: all)
@@ -28,17 +28,17 @@ For speed, prefer targeted sources (`-s arxiv,semantic,crossref`) over "all" unl
 
 ### Download PDF
 ```bash
-uv run --directory /opt/agents_tools/paper-search-mcp paper-search download <source> <paper_id> [-o ./downloads]
+paper-search download <source> <paper_id> [-o ./downloads]
 ```
 
 ### Read (extract text)
 ```bash
-uv run --directory /opt/agents_tools/paper-search-mcp paper-search read <source> <paper_id> [-o ./downloads]
+paper-search read <source> <paper_id> [-o ./downloads]
 ```
 
 ### List sources
 ```bash
-uv run --directory /opt/agents_tools/paper-search-mcp paper-search sources
+paper-search sources
 ```
 
 ## Output

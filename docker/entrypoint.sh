@@ -3,6 +3,7 @@ set -e
 
 export HOME="${HOME:-/home/user}"
 export PATH="/home/user/.bun/bin:/home/user/.local/bin:$PATH"
+export WIKI_HOME="${WIKI_HOME:-$HOME/wikis}"
 
 if [ "$(id -u)" = "0" ]; then
     chown -R 1000:1000 /home/user 2>/dev/null || true
@@ -18,6 +19,7 @@ echo "   Bun:      $(bun --version 2>&1 || echo 'missing')"
 echo "   Git:      $(git --version)"
 echo "   opencode: $(opencode --version 2>&1 | head -1)"
 echo "   GitNexus: $(gitnexus --version 2>&1 | head -1)"
+echo "   paper-search: $(uv tool list 2>/dev/null | grep paper-search-mcp | head -1 | awk '{print $2}' || echo 'missing')"
 
 if [ -n "$PLGRID_API_KEY" ] && [ ! -f /home/user/.local/share/opencode/auth.json ]; then
     mkdir -p /home/user/.local/share/opencode

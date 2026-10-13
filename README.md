@@ -81,3 +81,7 @@ Requires `SSH_KEY_PATH` in `.env`.
 - `research/` holds the upstream model benchmarks and provider notes.
 - The container profile enables GitNexus and Macrodata; the system profile stays minimal
   on purpose.
+- The `llm-wiki` skill builds and maintains local OKF knowledge wikis under `$WIKI_HOME`
+  (default `~/wikis`, mounted from `./data/wikis` in the container so they survive rebuilds).
+  Before creating a wiki the agent asks for the location, the provenance mode (raw-only or
+  flexible) and the language.

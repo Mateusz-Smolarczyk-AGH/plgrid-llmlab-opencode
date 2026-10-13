@@ -119,6 +119,8 @@ Use crwl proactively via bash. It handles JavaScript rendering, anti-bots, and i
 
 **paper-search:** Academic literature search. Downloads papers from 20+ sources (arXiv, PubMed, Semantic Scholar).
 
+**llm-wiki:** Build and maintain local OKF knowledge wikis. Load the `llm-wiki` skill when the user asks to create, populate, query or lint a wiki. Wikis live under `$WIKI_HOME` (default `~/wikis`, mounted from `./data/wikis` so they persist across container rebuilds). Before creating one, ask for the location, the provenance mode (raw-only or flexible) and the language.
+
 ## 6. Code Standards & Language
 
 **No comments in code files:**
