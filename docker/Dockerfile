@@ -53,6 +53,9 @@ WORKDIR /workspace
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+RUN groupadd -g 1000 user \
+    && useradd -u 1000 -g 1000 -M -d /home/user -s /bin/bash user
+
 RUN chown -R 1000:1000 /home/user
 
 USER 1000:1000

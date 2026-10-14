@@ -4,12 +4,13 @@ A shareable OpenCode configuration with two ways to run:
 
 - **system** — plain OpenCode on your machine (lightweight: no GitNexus, no Macrodata).
 - **container** — an isolated Docker container with GitNexus, Macrodata, Python/Node/Bun,
-  Playwright and Crawl4AI, plus easy project mounting.
+  Playwright and Crawl4AI, paper-search, llm-wiki, plus easy project mounting.
 
 Models are served through the [PLGrid Forge](https://llmlab.plgrid.pl) provider using the
 bundled `plgrid.js` plugin. No API key is stored in the config; authentication is done
-once with `opencode providers login -p plgrid` (or seeded from `PLGRID_API_KEY` in the
-container).
+once with `opencode providers login -p plgrid`. In the container it is seeded at startup
+from `PLGRID_API_KEY`, which is read from the `.env` Docker secret and never exported
+into the environment.
 
 ## Layout
 
@@ -70,14 +71,6 @@ survive a rebuild. If you rebuild another way and projects are missing, remount 
 scripts/remount-projects.sh
 ```
 
-## SSH access (optional)
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.ssh.yml up -d
-```
-
-Requires `SSH_KEY_PATH` in `.env`.
-
 ## Agents
 
 `architect` (plans, never edits), `editor` / `editor-cheap` (implement), `fastfix`
@@ -89,7 +82,15 @@ Requires `SSH_KEY_PATH` in `.env`.
 - `research/` holds the upstream model benchmarks and provider notes.
 - The container profile enables GitNexus and Macrodata; the system profile stays minimal
   on purpose.
+- OpenCode data (`~/.local/share/opencode`, including the `opencode.db` session
+  database and `auth.json`) is mounted from `./data/opencode-data`, so sessions and
+  login survive a container rebuild.
 - The `llm-wiki` skill builds and maintains local OKF knowledge wikis under `$WIKI_HOME`
   (default `~/wikis`, mounted from `./data/wikis` in the container so they survive rebuilds).
   Before creating a wiki the agent asks for the location, the provenance mode (raw-only or
   flexible) and the language.
+
+- WARNING - reviewer haas very strong model - expensive. You can change it to something cheaper.
+## Future work
+- Add auto model synchronization with LLMLAB
+- Add model categories (so when provider change models you will be up to date)

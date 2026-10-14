@@ -11,16 +11,20 @@ services:
     volumes:
       - .:/workspace:z
       - ./data/opencode-config:/home/user/.config/opencode:z
+      - ./data/opencode-data:/home/user/.local/share/opencode:z
       - ./data/macrodata:/home/user/.config/macrodata:z
       - ./data/wikis:/home/user/wikis:z
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/.Xauthority:/home/user/.Xauthority:ro
     environment:
       - HOME=/home/user
-      - PLGRID_API_KEY=${PLGRID_API_KEY}
-      - CONTEXT7_API_KEY=${CONTEXT7_API_KEY:-}
-      - GITHUB_PERSONAL_ACCESS_TOKEN=${GITHUB_PERSONAL_ACCESS_TOKEN:-}
       - DISPLAY=${DISPLAY:-:0}
       - XAUTHORITY=/home/user/.Xauthority
+    secrets:
+      - cyfrocode_env
     working_dir: /workspace
     network_mode: host
+
+secrets:
+  cyfrocode_env:
+    file: ./.env

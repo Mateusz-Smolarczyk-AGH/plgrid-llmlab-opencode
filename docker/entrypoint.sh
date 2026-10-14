@@ -21,14 +21,21 @@ echo "   opencode: $(opencode --version 2>&1 | head -1)"
 echo "   GitNexus: $(gitnexus --version 2>&1 | head -1)"
 echo "   paper-search: $(uv tool list 2>/dev/null | grep paper-search-mcp | head -1 | awk '{print $2}' || echo 'missing')"
 
-if [ -n "$PLGRID_API_KEY" ] && [ ! -f /home/user/.local/share/opencode/auth.json ]; then
+ENV_SECRET=/run/secrets/cyfrocode_env
+PLGRID_KEY=""
+if [ -f "$ENV_SECRET" ]; then
+    PLGRID_KEY="$(grep -E '^PLGRID_API_KEY=' "$ENV_SECRET" | tail -n1 | cut -d= -f2-)"
+fi
+
+if [ -n "$PLGRID_KEY" ] && [ ! -f /home/user/.local/share/opencode/auth.json ]; then
     mkdir -p /home/user/.local/share/opencode
-    printf '{"plgrid":{"type":"api","key":"%s"}}' "$PLGRID_API_KEY" \
+    printf '{"plgrid":{"type":"api","key":"%s"}}' "$PLGRID_KEY" \
         > /home/user/.local/share/opencode/auth.json
     chmod 600 /home/user/.local/share/opencode/auth.json
     echo ""
-    echo "PLGrid auth seeded from PLGRID_API_KEY"
+    echo "PLGrid auth seeded from $ENV_SECRET"
 fi
+unset PLGRID_KEY
 
 if [ -f /home/user/.config/opencode/package.json ] \
     && [ ! -d /home/user/.config/opencode/node_modules ]; then
@@ -44,6 +51,10 @@ if [ -f "$MACRODATA_ENTRY" ]; then
     printf 'export { default } from "%s"\n' "$MACRODATA_ENTRY" \
         > /home/user/.config/opencode/plugins/macrodata.js
 fi
+
+# The key was read from the mounted secret and never exported, so it is not in
+# this process's environment; these unsets remove it from any inherited env too.
+unset PLGRID_KEY PLGRID_API_KEY CONTEXT7_API_KEY GITHUB_PERSONAL_ACCESS_TOKEN
 
 if [ "$#" -gt 0 ]; then
     exec "$@"

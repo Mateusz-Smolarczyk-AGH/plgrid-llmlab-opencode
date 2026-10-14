@@ -21,7 +21,7 @@
         "-y",
         "@upstash/context7-mcp"
       ],
-      "comment": "Library/framework documentation lookup. Works unauthenticated; add [\"--api-key\", \"{env:CONTEXT7_API_KEY}\"] to raise rate limits. Verified connecting."
+      "comment": "Library/framework documentation lookup. Works unauthenticated. CONTEXT7_API_KEY is unset before opencode starts, so the {env:CONTEXT7_API_KEY} api-key option does not resolve in-container; add a Docker secret to enable it."
     }
   },
   "command": {
@@ -41,7 +41,13 @@
     }
   },
   "permission": {
-    "read": "allow",
+    "read": {
+      "*": "allow",
+      "/run/secrets/**": "deny",
+      "**/.ssh/**": "deny",
+      "**/auth.json": "deny",
+      "**/.env": "deny"
+    },
     "bash": {
       "*": "ask",
       "ls *": "allow",
@@ -76,7 +82,22 @@
       "crwl *": "allow",
       "crwl": "allow",
       "mkdir *": "allow",
-      "touch *": "allow"
+      "touch *": "allow",
+      "env": "deny",
+      "env *": "deny",
+      "printenv*": "deny",
+      "cat /proc/*/environ*": "deny",
+      "echo $PLGRID*": "deny",
+      "echo $CONTEXT7*": "deny",
+      "echo $GITHUB*": "deny",
+      "cat /run/secrets/*": "deny",
+      "cat *auth.json": "deny",
+      "cat *.env": "deny",
+      "grep * /run/secrets/*": "deny",
+      "rg * /run/secrets/*": "deny",
+      "find /run/secrets*": "deny",
+      "head * /run/secrets/*": "deny",
+      "tail * /run/secrets/*": "deny"
     },
     "webfetch": "allow",
     "gitnexus_*": "allow",
