@@ -20,20 +20,46 @@ echo "   Git:      $(git --version)"
 echo "   opencode: $(opencode --version 2>&1 | head -1)"
 echo "   GitNexus: $(gitnexus --version 2>&1 | head -1)"
 echo "   paper-search: $(uv tool list 2>/dev/null | grep paper-search-mcp | head -1 | awk '{print $2}' || echo 'missing')"
+echo "   basic-memory: $(basic-memory --version 2>&1 | head -1 || echo 'missing')"
 
 ENV_SECRET=/run/secrets/cyfrocode_env
 PLGRID_KEY=""
 if [ -f "$ENV_SECRET" ]; then
-    PLGRID_KEY="$(grep -E '^PLGRID_API_KEY=' "$ENV_SECRET" | tail -n1 | cut -d= -f2-)"
+    PLGRID_KEY="$(grep -E '^PLGRID_API_KEY=' "$ENV_SECRET" | tail -n1 | cut -d= -f2- | tr -d '\r')"
 fi
 
-if [ -n "$PLGRID_KEY" ] && [ ! -f /home/user/.local/share/opencode/auth.json ]; then
-    mkdir -p /home/user/.local/share/opencode
-    printf '{"plgrid":{"type":"api","key":"%s"}}' "$PLGRID_KEY" \
-        > /home/user/.local/share/opencode/auth.json
-    chmod 600 /home/user/.local/share/opencode/auth.json
+if [ -n "$PLGRID_KEY" ]; then
+    CRED_FILE="$(mktemp)"
+    python3 - "$PLGRID_KEY" > "$CRED_FILE" <<'PY'
+import json
+import sys
+
+print(json.dumps([{
+    "id": "plgrid",
+    "integrationID": "plgrid",
+    "type": "api",
+    "label": "PLGrid Forge",
+    "active": True,
+    "value": {"type": "key", "key": sys.argv[1]},
+}]))
+PY
+    seeded=0
+    for _ in 1 2 3 4 5; do
+        out="$(opencode auth import --standalone "$CRED_FILE" 2>&1 || true)"
+        if printf '%s' "$out" | grep -Eq 'Imported 1 credential|already present'; then
+            seeded=1
+            break
+        fi
+        sleep 2
+    done
+    rm -f "$CRED_FILE"
     echo ""
-    echo "PLGrid auth seeded from $ENV_SECRET"
+    if [ "$seeded" = "1" ]; then
+        echo "PLGrid auth seeded from $ENV_SECRET (opencode.db)"
+    else
+        echo "WARN: could not seed PLGrid auth automatically."
+        echo "      Run 'opencode auth login plgrid' inside the container once."
+    fi
 fi
 unset PLGRID_KEY
 
@@ -43,13 +69,6 @@ if [ -f /home/user/.config/opencode/package.json ] \
     echo "Installing plugin dependencies..."
     bun install --silent --cwd /home/user/.config/opencode 2>/dev/null \
         || echo "Plugin dependency install failed (non-fatal)"
-fi
-
-MACRODATA_ENTRY=/home/user/.config/opencode/node_modules/@macrodata/opencode/opencode/index.ts
-if [ -f "$MACRODATA_ENTRY" ]; then
-    mkdir -p /home/user/.config/opencode/plugins
-    printf 'export { default } from "%s"\n' "$MACRODATA_ENTRY" \
-        > /home/user/.config/opencode/plugins/macrodata.js
 fi
 
 # The key was read from the mounted secret and never exported, so it is not in

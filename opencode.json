@@ -13,6 +13,9 @@
     "prune": true
   },
   "mcp": {
+    "timeout": {
+      "startup": 120000
+    },
     "context7": {
       "type": "local",
       "enabled": true,
@@ -102,11 +105,12 @@
     "webfetch": "allow",
     "gitnexus_*": "allow",
     "context7_*": "allow",
+    "basic-memory_*": "allow",
+    "basic_memory_*": "allow",
     "paper_search_*": "allow",
     "playwright_*": "allow",
     "skill": {
       "gitnexus-*": "allow",
-      "macrodata-*": "allow",
       "paper-search": "allow",
       "playwright-*": "allow",
       "llm-wiki": "allow",

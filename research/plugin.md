@@ -1,6 +1,6 @@
 # The provider plugin
 
-`.opencode/plugins/plgrid.js` registers PLGrid Forge as an OpenCode provider without
+`plugin/plgrid.js` registers PLGrid Forge as an OpenCode provider without
 touching any public registry.
 
 ## Why a plugin rather than a config block

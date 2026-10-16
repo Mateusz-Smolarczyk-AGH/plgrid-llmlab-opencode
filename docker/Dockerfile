@@ -26,14 +26,15 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 RUN uv tool install "paper-search-mcp==0.1.4"
 
+RUN uv tool install "basic-memory" --prerelease=allow
+
 RUN npm install -g \
-    opencode-ai \
     gitnexus@1.6.12 \
     @upstash/context7-mcp \
     @playwright/cli@latest
 
 RUN mkdir -p /home/user/.local /home/user/.bun \
-    /home/user/.config/opencode /home/user/.config/macrodata \
+    /home/user/.config/opencode /home/user/basic-memory /home/user/.basic-memory \
     && chown -R 1000:1000 /home/user
 
 RUN python3 -m venv $VIRTUAL_ENV
@@ -42,7 +43,14 @@ COPY docker/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -U pip \
     && pip install --no-cache-dir -r /tmp/requirements.txt
 
-RUN playwright install --with-deps chromium && chmod -R 755 /ms-playwright
+RUN playwright install --with-deps chromium \
+    && playwright-cli install-browser chrome-for-testing \
+    && chmod -R 755 /ms-playwright
+
+ARG OPENCODE_VERSION=2
+ARG OPENCODE_REFRESH=
+RUN echo "Installing opencode ${OPENCODE_VERSION} (refresh=${OPENCODE_REFRESH})" \
+    && npm install -g "@opencode/cli@${OPENCODE_VERSION}"
 
 RUN git config --system --add safe.directory '*'
 
@@ -52,6 +60,8 @@ WORKDIR /workspace
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+
+COPY docker/playwright-cli.config.json /home/user/.playwright/cli.config.json
 
 RUN groupadd -g 1000 user \
     && useradd -u 1000 -g 1000 -M -d /home/user -s /bin/bash user

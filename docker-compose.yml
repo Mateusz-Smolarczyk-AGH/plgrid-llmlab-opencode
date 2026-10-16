@@ -12,7 +12,8 @@ services:
       - .:/workspace:z
       - ./data/opencode-config:/home/user/.config/opencode:z
       - ./data/opencode-data:/home/user/.local/share/opencode:z
-      - ./data/macrodata:/home/user/.config/macrodata:z
+      - ./data/basic-memory:/home/user/basic-memory:z
+      - ./data/basic-memory-config:/home/user/.basic-memory:z
       - ./data/wikis:/home/user/wikis:z
       - /tmp/.X11-unix:/tmp/.X11-unix
       - ${HOME}/.Xauthority:/home/user/.Xauthority:ro
