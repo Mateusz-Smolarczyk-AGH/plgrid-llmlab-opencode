@@ -1,4 +1,5 @@
 # CyfroCode — a ready-to-run OpenCode agent
+![](logo.png)
 
 This repository gives you a fully configured [OpenCode](https://opencode.ai) coding agent
 that runs on models hosted by the [PLGrid Forge](https://llmlab.plgrid.pl) gateway, together

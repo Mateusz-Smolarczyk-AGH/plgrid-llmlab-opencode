@@ -10,3 +10,6 @@ data/
 docker-compose.override.yml
 skills/cyfrocode-specialists/
 projects.json
+.claude/
+.opencode/
+.ruff_cache/

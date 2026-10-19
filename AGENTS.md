@@ -79,20 +79,22 @@ gitnexus analyze . --embeddings --skills
 gitnexus detect_changes
 ```
 
-## 4. Core Tool: Macrodata (Persistent Memory)
+## 4. Core Tool: Basic Memory (Persistent Memory)
 
-Macrodata provides persistent memory across sessions.
+Basic Memory provides persistent, local memory across sessions as plain Markdown
+files, exposed over MCP. It is container-only (the `container` profile).
 
 **Recall BEFORE asking:**
-- `macrodata_search_memory` — Search retained facts
-- `macrodata_search_conversations` — Search today's conversations
+- `basic-memory_search_notes` — Find notes by keyword or meaning
+- `basic-memory_build_context` — Follow the knowledge graph around a topic
 
-**Journal after significant work:**
-- `macrodata_log_journal` — Record accomplishments, decisions, technical facts
+**Write after significant work:**
+- `basic-memory_write_note` — Create a note (observations + relations)
+- `basic-memory_edit_note` — Append or update an existing note
+- `basic-memory_recent_activity` — See what was recorded recently
 
-**Workspace state:**
-- Keep `~/.config/macrodata/state/workspace.md` current with active projects/tasks
-- Keep `~/.config/macrodata/state/today.md` current with immediate objectives
+Notes live under `~/basic-memory` (mounted from `./data/basic-memory`), so they
+survive a container rebuild and stay readable outside OpenCode.
 
 
 ## 5. Web & Research Tools
