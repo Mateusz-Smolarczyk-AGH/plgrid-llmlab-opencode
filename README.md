@@ -1,383 +1,247 @@
-# OpenCode + PLGrid Forge
+# CyfroCode — a ready-to-run OpenCode agent
+![](logo.png)
 
-A working, sane OpenCode setup for the PLGrid Forge models on ACK Cyfronet
-supercomputers. Drop it in, log in once, and you have an agentic coding assistant
-running on Polish academic infrastructure.
+This repository gives you a fully configured [OpenCode](https://opencode.ai) coding agent
+that runs on models hosted by the [PLGrid Forge](https://llmlab.plgrid.pl) gateway, together
+with a curated set of tools and skills:
 
-> [!IMPORTANT]
-> OpenCode ships in two forms: a terminal app (the TUI, started with `opencode`, plus
-> `opencode run` for scripts) and graphical apps (the desktop app and the web
-> interface). **This setup covers the terminal TUI only.** Everything here was built
-> and tested in the terminal; the graphical apps were not tested.
+- **Code intelligence** — GitNexus builds a knowledge graph of your code so the agent can
+  trace call flows, inspect symbols and estimate what a change will break.
+- **Persistent memory** — Basic Memory keeps notes as plain Markdown that both you and the
+  agent read and write, across sessions.
+- **Up-to-date documentation** — Context7 looks up current library and framework docs.
+- **Research and automation** — search academic papers, drive a real browser (Playwright),
+  crawl JavaScript-heavy sites (Crawl4AI), and build local knowledge wikis.
 
-Model capabilities, context limits and the benchmark figures below were **measured
-against the live gateway**, not copied from model cards.
+You do not install any of this yourself. Clone the repository, add your PLGrid API key, and
+start the container.
 
-**Documentation:**
+There are two ways to run it:
 
-| | |
-|---|---|
-| [research/models.md](research/models.md) | Which models work, measured throughput and correctness, recommended assignments |
-| [research/pitfalls.md](research/pitfalls.md) | Traps that cost real debugging time — config, agents, runtime, model behaviour |
-| [research/plugin.md](research/plugin.md) | How the provider plugin works and how to distribute it |
-| [research/reproducing.md](research/reproducing.md) | Commands to re-derive every measurement yourself |
-| [research/benchmarks/](research/benchmarks/) | Agentic fixtures with differential scorers |
+- **Container (recommended)** — an isolated Docker container with OpenCode, the model
+  provider, and every tool above preinstalled. Nothing is installed on your machine except
+  Docker.
+- **System** — plain OpenCode on your own machine using this repository's configuration,
+  without the container's extra tooling.
 
-## Requirements
+## What you need
 
-- A PLGrid account, team, and grant with LLM credits — see the
-  [Forge guide](https://guide.plgrid.pl/en/integrated-platforms/plgrid_forge).
-  Activate the service at <https://portal.plgrid.pl/services/111>, then generate a
-  key at <https://llmlab.plgrid.pl> under **Grants → Generate API Key**.
-- [OpenCode](https://opencode.ai) 1.18.5 or newer, the terminal version. Both the 1.x
-  and the 2.x version work — see the next section.
-- Optional but recommended: `npm install -g pyright` for in-editor diagnostics
-  (see *LSP* below).
+- Docker with the Compose plugin (`docker compose version`) — for the container profile.
+- A PLGrid grant and API key. Sign in at <https://llmlab.plgrid.pl>, open
+  **Grants → Generate API Key**, and copy the `plg-…` value. Access is granted per model, so
+  you can only use models your grant covers.
+- For the system profile: OpenCode 2.x installed
+  (`curl -fsSL https://opencode.ai/v2/install | bash`).
 
-## OpenCode 1.x and 2.x
+## Quick start (container)
 
-OpenCode is currently available in two versions, 1.x and 2.x. Which one you get
-depends on how you install it; `opencode --version` tells you which one you have.
 
-> [!NOTE]
-> 2.x has been released since 2026-09-11 (2.0.0). 1.x has not been retired: as of
-> 2026-10-07 it is still released (1.18.35, published 2026-10-06), and no end-of-support
-> date has been announced.
-
-| | OpenCode 1.x | OpenCode 2.x |
-|---|---|---|
-| Install with | `curl -fsSL https://opencode.ai/install \| bash`<br>or `npm install -g opencode-ai` | `brew install opencode`<br>or `curl -fsSL https://opencode.ai/v2/install \| bash` |
-| `opencode --version` shows | `1.…` | `opencode v2.…` |
-| Log in to PLGrid | `opencode providers login -p plgrid` | `opencode auth login plgrid` |
-| Docs | [opencode.ai/docs](https://opencode.ai/docs/) | [opencode.ai/v2/docs](https://opencode.ai/v2/docs/) |
-
-**This setup works with both**, and you install it the same way. On 2.x, three things
-differ:
-
-- **2.x needs its own login.** If you already used 1.x, 2.x copies your key the first
-  time it runs. On a fresh install, run `opencode auth login plgrid`; until then the
-  PLGrid models do not appear.
-- **No LSP.** 2.x does not run language servers; see *LSP* below.
-- **Per-agent temperature settings are ignored** for now.
-
-`opencode.json` is written in the 1.x format, and 2.x converts it at startup. If you
-edit it, keep that format: 1.x does not start with a config written in the 2.x format.
-How the plugin supports both versions is described in
-[research/plugin.md](research/plugin.md).
-
-## Install
-
-### 1. Check your OpenCode version
+**1. Add your API key**
 
 ```bash
-opencode --version
+cp .env.example .env
+# edit .env and set PLGRID_API_KEY=plg-…
 ```
 
-`1.…` means 1.x, `opencode v2.…` means 2.x. Step 3 differs between the two.
+`.env` is mounted into the container as a Docker secret and is never injected into the
+environment. On startup the container imports the key into OpenCode's credential store once,
+then forgets it.
 
-### 2. Copy the setup files
-
-The setup is the provider plugin, the config and the agent directives. Install it for
-one project or for every project on the machine.
-
-#### Per project
-
-Copy the plugin, the agent directives and the config into the root of your project:
+**2. Build and start**
 
 ```bash
-cp -r .opencode AGENTS.md opencode.json /path/to/your/project/
+scripts/setup.sh --profile container --build --up
 ```
 
-#### Machine-wide
+This builds the image, creates the data directories, starts the `cyfrocode` container and
+runs a quick self-check.
 
-Create OpenCode's global plugin directory, if it does not exist yet:
+**3. Enter the agent**
 
 ```bash
-mkdir -p ~/.config/opencode/plugins
+docker exec -it cyfrocode opencode
 ```
 
-Copy the provider plugin into it:
+The first `basic-memory` start takes about a minute while it prepares its indexes; the agent
+is usable immediately, memory tools just become available a little later.
+
+To stop the container:
 
 ```bash
-cp .opencode/plugins/plgrid.js ~/.config/opencode/plugins/
+docker compose down
 ```
 
-Install the config as your global OpenCode config. This overwrites an existing
-`~/.config/opencode/opencode.json` — if you already have one, merge the two by hand
-instead:
+## Quick start (system)
+
+Use this if you only want the configuration and the PLGrid provider on your own machine —
+no GitNexus, no Basic Memory, no container tools.
 
 ```bash
-cp opencode.json ~/.config/opencode/opencode.json
+scripts/setup.sh --profile system --target ~/.config/opencode
+opencode auth login plgrid        # paste your plg-… key when asked
 ```
 
-### 3. Log in and verify
+## Using the agent
 
-Log in once with your grant's API key. OpenCode stores it in your home directory —
-**never** in any file in this repo.
+OpenCode runs in your terminal. Once inside, you talk to it in plain language and it reads,
+writes and runs code on your behalf, asking for permission before anything risky.
 
-#### OpenCode 1.x
+A few things that are specific to this setup:
 
-Log in and paste the key. It is stored in `~/.local/share/opencode/auth.json`:
+- **Choose a model.** The default is DeepSeek V4.1 Flash. Run `/models` inside the TUI to
+  pick another; the PLGrid gateway exposes 20+ models (DeepSeek, Qwen, GLM, Llama, Bielik,
+  PLLuM, Gemma and more). `opencode models` lists them from the shell.
+- **Built-in commands.**
+  - `/check` — run the project's type checker and tests, fix failures, report what happened.
+  - `/review` — review your current diff for defects.
+  - `/explain <topic>` — explain how something works in the codebase, with file references.
+- **Ask it to use a skill.** Skills are task playbooks the agent loads on demand (see below).
+  You can also invoke one directly.
+
+## Capabilities
+
+### MCP servers
+
+MCP servers give the agent extra tools beyond editing files and running commands. The
+container profile enables all three below; the system profile keeps only Context7.
+
+| Server | What it adds |
+| --- | --- |
+| **context7** | Current documentation and code examples for libraries and frameworks. Ask the agent to check the latest API before it writes code. |
+| **gitnexus** | A structural map of your code — execution flows, symbol context, and impact analysis (`gitnexus_*` tools). |
+| **basic-memory** | Notes as Markdown: `write_note`, `search_notes`, `build_context`, `recent_activity` and more. |
+
+The first two work out of the box. Basic Memory needs a moment on first start (see
+[Troubleshooting](#troubleshooting)).
+
+### Skills
+
+Skills are loaded by the agent when a task matches. The container ships:
+
+| Skill | Use it for |
+| --- | --- |
+| `gitnexus-exploring` | Understand how code works; trace execution flows. |
+| `gitnexus-debugging` | Trace a bug or an error to its source. |
+| `gitnexus-impact-analysis` | Know what a change will break before making it. |
+| `gitnexus-refactoring` | Rename, extract, split or move code safely. |
+| `gitnexus-cli` | Index a repo, check status, generate wikis. |
+| `gitnexus-guide` | Reference for the GitNexus tools themselves. |
+| `llm-wiki` | Build, populate and query local Markdown knowledge wikis. |
+| `paper-search` | Find, download and read academic papers (arXiv, PubMed, …). |
+| `playwright-cli` | Drive a browser; write and run Playwright tests. |
+| `cyfrocode-specialists` | Domain playbooks for backend, frontend, data/ML, DevOps, security and QA work. |
+
+### Helper programs
+
+These are on the container's `PATH` and used by the agent (and by you):
+
+- `gitnexus` — code intelligence CLI (`gitnexus query`, `context`, `impact`, `analyze`).
+- `basic-memory` / `bm` — the same note store as the MCP server, for scripting.
+- `paper-search` — academic literature search and download.
+- `crwl` — JavaScript-aware web crawler and scraper.
+- `playwright` — browser automation (Chromium preinstalled).
+- `uv`, `bun`, `node`, `python3` — runtimes for the tools and skills.
+
+### Subagents
+
+OpenCode can delegate work to specialised agents. This setup defines:
+
+| Agent | Role |
+| --- | --- |
+| `architect` | Plans a task and delegates the edits; never edits files itself. |
+| `editor` / `editor-cheap` | Implements multi-file changes and runs tests. |
+| `fastfix` | Small, mechanical edits (a rename, a one-line fix). |
+| `reviewer` | Reviews a diff for defects. Read-only. |
+| `researcher` | Traces how code works and reports with file references. Read-only. |
+| `quick` | Fast, cheap agent for small tasks. |
+| `chat` | Plain chat with no tools. |
+
+> The `reviewer` agent uses a strong, expensive model. If cost matters, change it in
+> `opencode.json`.
+
+## Working on your own projects
+
+Mount host folders into the container so the agent can work on them:
 
 ```bash
-opencode providers login -p plgrid
+scripts/add-project.sh /home/you/code/my-api my-api   # -> /projects/my-api
+scripts/list-projects.sh
+scripts/enter-project.sh my-api                        # cd into it and launch OpenCode
 ```
 
-Check that the provider is registered. This should list 20 models:
+Projects are recorded in `projects.json` and survive rebuilds. If you rebuild the container
+by hand and your projects are missing, run:
 
 ```bash
-opencode models plgrid
+scripts/remount-projects.sh
 ```
 
-#### OpenCode 2.x
+## Where your data lives
 
-Log in and paste the key. It is stored in `~/.local/share/opencode/opencode.db`:
+Everything important is stored under `./data/` on the host, so it survives rebuilding or
+removing the container:
+
+| Host path | In the container | Contents |
+| --- | --- | --- |
+| `data/opencode-data` | `~/.local/share/opencode` | Sessions and the credential store (`opencode.db`). |
+| `data/opencode-config` | `~/.config/opencode` | The active configuration, skills and plugins. |
+| `data/basic-memory` | `~/basic-memory` | Your notes, as plain Markdown — open them in Obsidian or commit them to git. |
+| `data/basic-memory-config` | `~/.basic-memory` | Basic Memory's search index and settings. |
+| `data/wikis` | `~/wikis` | Knowledge wikis built with the `llm-wiki` skill. |
+
+Basic Memory notes are the source of truth and stay readable outside OpenCode; the index can
+always be rebuilt from them.
+
+## Keeping it up to date
 
 ```bash
-opencode auth login plgrid
+git pull
+scripts/setup.sh --profile container --build --up
 ```
 
-Check that the provider is registered. This should list 20 models; if it prints
-nothing, run it again:
+The rebuild refreshes the container image (OpenCode, GitNexus, Python/Node tooling) while
+sessions, memory and wikis are preserved in `./data/`.
+
+OpenCode cannot be upgraded from inside the running container, so pick the version at build
+time. To install the newest release:
 
 ```bash
-opencode models | grep '^plgrid/'
+scripts/setup.sh --profile container --build --up --update-opencode
 ```
 
-### 4. Start the OpenCode TUI
-
-Run it in your project directory. Use `/models` to switch model and **Tab** to switch
-agent:
+To pin a specific version instead:
 
 ```bash
-opencode
+scripts/setup.sh --profile container --build --up --opencode-version 2.1.0
 ```
 
-## What you get
+`--opencode-version` accepts any npm dist-tag or version (default `2`). OpenCode lives in its
+own image layer, so changing it rebuilds only that layer, not the whole image.
 
-**20 models**, of which **14 support function calling**. On the benchmark fixtures,
-run three times each and scored on hidden cases the model never saw
-([method](research/benchmarks/README.md), [results](research/models.md)), these are
-the ones worth using for agentic work:
+## Troubleshooting
 
-| Model | Context | Correct (3 runs, /22) | Task s | Use for |
-|---|---|---|---|---|
-| `deepseek-ai/DeepSeek-V4.1-Flash` | 1M | 22 · 22 · 22 | 19 / 27 | **default**, `architect`, `researcher`, `fastfix` |
-| `deepseek-ai/DeepSeek-V4-Flash` | 700k | 22 · 22 · 22 | 35 / 31 | alternative without reasoning |
-| `Qwen/Qwen3.6-27B` | 262k | 22 · 22 · 22 | 55 / 59 | `reviewer` — thorough, slow |
-| `google/gemma-4-31B` | 262k | 22 · 22 · 22 | 30 / 42 | `small_model` |
-| `zai-org/GLM-5.3-Flash` | 1M | 22 · 22 · 22 | 23 / 33 | strong alternative default |
-| `Qwen/Qwen3.8-27B` | 262k | 22 · 22 · 22 | 42 / 82 | alternative reviewer |
-| `Qwen/Qwen3.6-35B-A3B` | 262k | 22 · 22 · 22 ⚠ | 17 / 21 | fastest — review its output |
+- **An MCP server shows "pending" and then connects.** Basic Memory takes 40–60 s to start
+  on a cold container because it generates its tool schemas at launch. This is expected; the
+  configuration already allows enough time for it.
+- **Check what is running:**
 
-"Task s" is the median wall time of one whole agentic run (calc / ledger fixture) —
-what an agent actually waits for. Generation rates are in
-[research/models.md](research/models.md); they depend heavily on gateway load.
-
-⚠ **`Qwen3.6-35B-A3B` is the fastest model and open to every grant, but it can be
-silently wrong.** On these fixtures it has produced solutions whose whole test suite
-passed while `evaluate("2 * 3 * 4")` returned `10` — a green suite over broken code,
-indistinguishable from outside without hidden test cases. It was clean in this run;
-the failure is intermittent. Use it where you review the output, not unattended.
-
-Three tool-capable models are **not safe to use unattended**, and `opencode run` still
-exits 0 when they fail. `Llama-3.3-70B` returns floats where integers are expected (a whole suite
-green, every hidden case wrong) and **rewrites the test file** to fit its code.
-`Bielik-11B-v3.0` scores 0 and **reports passes it never achieved**. `Qwen3-Coder-30B`
-is usually right but sometimes announces a tool call and ends its turn without making
-it, changing nothing.
-
-The remaining 6 models **cannot use tools**. They remain useful for chat, translation
-and Polish-language work.
-
-> **Important:** to use a model without function calling, switch to the `chat`
-> agent first (**Tab** in the TUI, or `--agent chat`). The default `build` and
-> `plan` agents always send a tools array, and those models reject it with a hard
-> HTTP 400.
-
-**5 agents:**
-
-| Agent | Type | Model | Purpose |
-|---|---|---|---|
-| `architect` | primary | DeepSeek-V4.1-Flash | Plans and delegates; **cannot edit files** |
-| `chat` | primary | any | No tools — for the non-function-calling models |
-| `researcher` | subagent | DeepSeek-V4.1-Flash | Traces code paths, read-only |
-| `reviewer` | subagent | Qwen3.6-27B, t=0.1 on 1.x | Finds defects, read-only |
-| `fastfix` | subagent | DeepSeek-V4.1-Flash | Small, well-specified mechanical edits |
-
-Invoke subagents with `@researcher`, `@reviewer`, `@fastfix`. Cycle primary agents
-(`architect`, `chat`, and the built-in `build`/`plan`) with **Tab** in the TUI, or
-pass `--agent <name>` to `opencode run`. The benchmark's own `bench` agent is not
-here: it lives in `research/benchmarks/bench-opencode.json`, loaded only by the
-benchmark runner.
-
-`AGENTS.md` is deliberately short and contains only directives — it is prepended to
-every agent's system prompt, so anything descriptive in it is paid for on every
-request. OpenCode already injects the agent and command descriptions from
-`opencode.json`; do not restate them there.
-
-**3 commands:** `/check` (typecheck + test + fix), `/review` (review the diff),
-`/explain <thing>` (trace with file:line citations).
-
-**Permissions:** `bash` asks by default; read-only inspection is allow-listed;
-`rm -rf`, `git push`, `git rebase` and `git reset --hard` are denied outright.
-`git commit` asks.
-
-## LSP
-
-> [!WARNING]
-> **OpenCode 1.x only.** 2.x accepts `lsp` but runs no language servers and returns no
-> diagnostics ([migration guide](https://opencode.ai/v2/docs/migrate-v1/)). Upstream
-> has not said whether this changes: see
-> [anomalyco/opencode#50916](https://github.com/anomalyco/opencode/issues/50916), and
-> [#51416](https://github.com/anomalyco/opencode/issues/51416) for LSP access from
-> plugins. On 2.x, `AGENTS.md` tells agents to run the project's type checker or
-> linter instead.
-
-`"lsp": true` is set, and it is worth having: after **every edit** OpenCode feeds
-the language server's diagnostics straight back to the agent, which then fixes its
-own type errors unprompted.
-
-But it needs the server binary installed. With no `pyright` on `PATH`, `lsp: true`
-silently starts nothing.
-
-For Python, install `pyright`:
-
-```bash
-npm install -g pyright
-```
-
-For TypeScript and JavaScript, install the TypeScript language server:
-
-```bash
-npm install -g typescript typescript-language-server
-```
-
-## Customise
-
-Nothing here is sacred. Common changes:
-
-- **Different default model** — edit `"model"` at the top.
-- **Project rules** — edit `AGENTS.md`. It is loaded into every agent's prompt.
-  On an existing codebase, run `/init` first to generate a draft.
-- **Reuse existing Claude Code config** — OpenCode reads Claude Code's formats:
-  ```json
-  "instructions": ["AGENTS.md", "~/.claude/rules/common/*.md"],
-  "skills":       { "paths": ["~/.claude/skills"] }
-  ```
-  Your existing `~/.claude/skills` folder works as-is.
-- **MCP servers** — add an `mcp` block; see the
-  [docs](https://opencode.ai/docs/mcp-servers/). Add one at a time and verify each.
-
-## Known issues
-
-- **Some models are restricted to some grants.** An API key belongs to one grant, and
-  a model your grant cannot use answers *"not available for grant 'N'"*.
-  `DeepSeek-V4.1-Flash` — the default, and the model for `architect`, `researcher` and
-  `fastfix` — is restricted, as are `DeepSeek-V4-Flash`, `GLM-5.2-FP8`,
-  `GLM-5.3-Flash`, `Qwen3.8-27B` and the `Qwen3.5` models. They include the
-  best-performing models here, which is why the default is one of them: **if your
-  grant cannot use it, ask for access via the PLGrid Helpdesk.** Until then, set `model`,
-  `architect` and `researcher` to `plgrid/Qwen/Qwen3.6-27B` and `fastfix` to
-  `plgrid/google/gemma-4-31B` — both open to all grants and perfect on the benchmark.
-  Check which models your own key can reach with
-  [`research/list_models.py`](research/list_models.md); the catalog's answer depends
-  on who asks.
-- **`opencode run` occasionally exits 0 having done nothing.** Harmless interactively.
-  If you script it, assert on the expected artifact, not the exit code.
-- **Scripted runs hang when a subagent needs permission.** `opencode run --auto`
-  approves prompts from the primary agent only; a subagent's prompt is never answered.
-  Common read-only tools are allow-listed here for that reason. If you script the
-  `architect` and extend what its subagents do, allow those commands too
-  ([details](research/pitfalls.md)).
-- **Several models are flagged non-commercial** by the gateway (`DeepSeek-V4.1-Flash`,
-  `GLM-5.2-FP8`, `GLM-5.3-Flash`, `Qwen3.6-27B`, `gemma-4-31B`, `PLLuM-12B`).
-  Irrelevant for academic and research use, which is what PLGrid grants are for. It
-  only matters if you have a commercial affiliation.
-- **A model can be listed and not answer.** `GLM-5.2-FP8` is in the catalog as active
-  but timed out on every request when the benchmark was run.
-- **The model list is a snapshot.** PLGrid adds and retires models. To re-check the
-  raw catalog, export your key as `LLMLAB_API_KEY` and run:
   ```bash
-  curl -H "Authorization: Bearer $LLMLAB_API_KEY" https://llmlab.plgrid.pl/api/v1/models-plgrid-format | python3 -m json.tool
-  ```
-  That endpoint is authoritative for `function_calling_supported` and `is_active`.
-  For one line per model with its price and capability tags, run the helper script
-  instead. It reads the key from the repo-root `.env` and needs `requests` and
-  `python-dotenv` ([details](research/list_models.md)):
-  ```bash
-  python3 research/list_models.py
+  docker exec cyfrocode opencode mcp list       # are the MCP servers connected?
+  docker exec cyfrocode opencode plugin list    # is the PLGrid provider loaded?
+  docker exec cyfrocode scripts/verify.sh       # environment self-check
   ```
 
-## Honest expectations
+- **"model not available for grant".** Access to each model is per PLGrid grant. Pick a model
+  your grant covers, or request access at <https://llmlab.plgrid.pl>.
+- **PLGrid auth did not seed automatically.** Log in once inside the container:
+  `docker exec -it cyfrocode opencode auth login plgrid`.
+- **A rebuild lost your projects.** Run `scripts/remount-projects.sh`.
 
-These are open-weight models, not frontier ones. The best of them are roughly
-Sonnet-class on a good day; the rest are below that. For well-specified
-single-file work they are genuinely good and fast. For multi-file refactors with
-ambiguous requirements, expect a real gap versus Claude or GPT.
+## Licence and acceptable use
 
-What you get in return: your data stays on Polish academic infrastructure, PLGrid
-administrators cannot read request or response content, and nothing goes to a
-foreign vendor.
-
-## Four things worth knowing (all verified in OpenCode 1.x source)
-
-These bite open-weight models harder than frontier ones, and none are obvious from
-the docs. [research/pitfalls.md](research/pitfalls.md) has the full list with
-source references.
-
-**1. `steps` defaults to `Infinity`** (`session/prompt.ts:1178`). No loop cap out of
-the box — a model that spins, spins forever. This config sets a cap per agent
-(5–40). Adjust rather than remove.
-
-**2. An agent's `prompt` REPLACES the base system prompt** — it does not append
-(`session/llm/request.ts:60`). If you write a custom agent prompt, you silently drop
-OpenCode's tool-usage instructions. That is why every prompt here ends with explicit
-tool discipline. Keep it if you edit them.
-
-**3. Malformed tool calls are two different bugs.** Self-hosting: vLLM needs
-`--enable-auto-tool-choice` plus the right `--tool-call-parser` — and it documents
-**no parser** for GLM-5.x, Qwen3.5/3.6, DeepSeek V4, Kimi K2.5+ or MiniMax, so for
-self-hosting prefer a model one generation back (`glm47`, `qwen3_xml`, `hermes`
-have parsers). Hosted: models sometimes emit tool markup inside the *reasoning*
-channel, which no flag fixes — see
-[issue #6708](https://github.com/anomalyco/opencode/issues/6708). OpenCode has
-declined to add client-side repair, so if you hit it, reduce `limit.context` below
-where it starts.
-
-**4. `compaction.prune` does nothing for small-context models.** It needs ~60k of
-accumulated tool output before it fires (`PRUNE_MINIMUM` 20k, `PRUNE_PROTECT` 40k).
-Useful for the 200k+ models here, irrelevant at 32k. 2.x ignores the setting.
-
-## Why the agents are split the way they are
-
-Practitioners report a pattern that inverts the intuition that the big model should
-do all the work:
-
-> *"The big expensive models are great at planning tasks and reviewing the
-> implementation… The small cheap models are actually great (and fast) at generating
-> decent code if they have the right direction up front."*
-
-On PLGrid the models cost research credits rather than money, so here the split is
-about constraints and independence rather than price:
-
-- The `architect` **cannot edit files at all** — it must delegate, which stops a
-  planner making a mess directly.
-- `fastfix` gets a narrow prompt and a 15-step cap; the constraint is the point. It
-  runs on DeepSeek-V4.1-Flash, the same model as the `architect`, because that model
-  had a perfect record and finished tasks fastest.
-- The `reviewer` is deliberately a different model family — Qwen3.6-27B, at
-  temperature 0.1 on 1.x — so a review is not the author checking its own work.
-
-Note the built-in `plan` agent cannot do this: it has `task: { general: "deny" }`
-hardcoded, so it can never hand work to an implementer. That is why `architect`
-exists as a custom agent.
-
-Also: **the TUI does not reliably show delegation.** Use
-`opencode export <session-id>` if you need to audit which subagent actually ran.
-
----
-
-## Licence
-
-Config and documentation — do what you like with it.
+- Models are served through the PLGrid Forge gateway under the terms and grants of your
+  PLGrid account. Several models are labelled **non-commercial** — check before any
+  commercial use.
+- **Basic Memory** is free and open-source under **AGPL-3.0**. This setup runs only its local
+  server: no account, no subscription, nothing leaves your machine.
+- Treat this setup itself as non-commercial unless you have reviewed the licences above.

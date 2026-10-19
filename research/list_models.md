@@ -69,7 +69,7 @@ The reason this is documented for agents, not just people:
 - **Check reality before measuring.** Confirm a model is `Active` and `Accessible`
   before benchmarking it or probing its context window; the reproduction guide in
   [`reproducing.md`](reproducing.md) assumes this.
-- **Regenerate the catalog.** The provider plugin `../.opencode/plugins/plgrid.js` and
+- **Regenerate the catalog.** The provider plugin `../plugin/plgrid.js` and
   the roster in [`../README.md`](../README.md) are both derived from this same
   endpoint; this script is the quick way to see what changed.
 - **Report capability limits honestly.** When asked "can this model do X?", the `FC`,

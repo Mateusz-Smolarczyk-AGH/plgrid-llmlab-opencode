@@ -3,5 +3,13 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 bench-run/
-.env
 venv/
+.env
+node_modules/
+data/
+docker-compose.override.yml
+skills/cyfrocode-specialists/
+projects.json
+.claude/
+.opencode/
+.ruff_cache/

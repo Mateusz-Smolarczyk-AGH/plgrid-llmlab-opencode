@@ -1,0 +1,20 @@
+{
+  "mcp": {
+    "gitnexus": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "gitnexus",
+        "mcp"
+      ]
+    },
+    "basic-memory": {
+      "type": "local",
+      "enabled": true,
+      "command": [
+        "basic-memory",
+        "mcp"
+      ]
+    }
+  }
+}

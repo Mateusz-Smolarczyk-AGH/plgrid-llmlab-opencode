@@ -226,7 +226,7 @@ trap on_signal INT TERM
 setup_config() {
   mkdir -p "$CONFIG_HOME/opencode/plugins" "$ARCHIVE" || die "cannot create $CONFIG_HOME or $ARCHIVE"
   cp "$BENCH/bench-opencode.json" "$CONFIG_HOME/opencode/opencode.json" \
-    && cp "$ROOT/.opencode/plugins/plgrid.js" "$CONFIG_HOME/opencode/plugins/plgrid.js" \
+    && cp "$ROOT/plugin/plgrid.js" "$CONFIG_HOME/opencode/plugins/plgrid.js" \
     || die "cannot install the benchmark OpenCode config into $CONFIG_HOME"
 }
 
