@@ -129,7 +129,6 @@ Skills are loaded by the agent when a task matches. The container ships:
 | `llm-wiki` | Build, populate and query local Markdown knowledge wikis. |
 | `paper-search` | Find, download and read academic papers (arXiv, PubMed, …). |
 | `playwright-cli` | Drive a browser; write and run Playwright tests. |
-| `cyfrocode-specialists` | Domain playbooks for backend, frontend, data/ML, DevOps, security and QA work. |
 
 ### Helper programs
 
